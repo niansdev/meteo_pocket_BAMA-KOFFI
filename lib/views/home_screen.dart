@@ -30,7 +30,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _showAllPopularCities = false;
   bool _showAllFavorites = false;
 
+  // ============================================================
+  // LISTE COMPLÈTE DES VILLES POPULAIRES
+  // ============================================================
+
   final List<City> popularCities = const [
+    // ----------------------------------------------------------
+    // CÔTE D'IVOIRE
+    // ----------------------------------------------------------
+
     City(
       name: 'Abidjan',
       latitude: 5.36,
@@ -43,12 +51,282 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       longitude: -5.03,
       country: "Côte d'Ivoire",
     ),
+    City(
+      name: 'Yamoussoukro',
+      latitude: 6.83,
+      longitude: -5.29,
+      country: "Côte d'Ivoire",
+    ),
+
+    // ----------------------------------------------------------
+    // AFRIQUE
+    // ----------------------------------------------------------
+    City(name: 'Accra', latitude: 5.56, longitude: -0.20, country: 'Ghana'),
+    City(
+      name: 'Addis-Abeba',
+      latitude: 9.03,
+      longitude: 38.74,
+      country: 'Éthiopie',
+    ),
+    City(
+      name: 'Casablanca',
+      latitude: 33.57,
+      longitude: -7.59,
+      country: 'Maroc',
+    ),
     City(name: 'Dakar', latitude: 14.72, longitude: -17.47, country: 'Sénégal'),
+    City(
+      name: 'Johannesburg',
+      latitude: -26.20,
+      longitude: 28.05,
+      country: 'Afrique du Sud',
+    ),
+    City(
+      name: 'Le Caire',
+      latitude: 30.04,
+      longitude: 31.24,
+      country: 'Égypte',
+    ),
+    City(name: 'Lagos', latitude: 6.52, longitude: 3.38, country: 'Nigeria'),
+    City(
+      name: 'Marrakech',
+      latitude: 31.63,
+      longitude: -8.00,
+      country: 'Maroc',
+    ),
+    City(name: 'Nairobi', latitude: -1.29, longitude: 36.82, country: 'Kenya'),
+    City(name: 'Tunis', latitude: 36.81, longitude: 10.18, country: 'Tunisie'),
+    City(
+      name: 'Cape Town',
+      latitude: -33.93,
+      longitude: 18.42,
+      country: 'Afrique du Sud',
+    ),
+
+    // ----------------------------------------------------------
+    // EUROPE
+    // ----------------------------------------------------------
+    City(
+      name: 'Amsterdam',
+      latitude: 52.37,
+      longitude: 4.90,
+      country: 'Pays-Bas',
+    ),
+    City(name: 'Athènes', latitude: 37.98, longitude: 23.73, country: 'Grèce'),
+    City(
+      name: 'Barcelone',
+      latitude: 41.39,
+      longitude: 2.17,
+      country: 'Espagne',
+    ),
+    City(
+      name: 'Berlin',
+      latitude: 52.52,
+      longitude: 13.40,
+      country: 'Allemagne',
+    ),
+    City(
+      name: 'Bruxelles',
+      latitude: 50.85,
+      longitude: 4.35,
+      country: 'Belgique',
+    ),
+    City(
+      name: 'Copenhague',
+      latitude: 55.68,
+      longitude: 12.57,
+      country: 'Danemark',
+    ),
+    City(name: 'Dublin', latitude: 53.35, longitude: -6.26, country: 'Irlande'),
+    City(
+      name: 'Lisbonne',
+      latitude: 38.72,
+      longitude: -9.14,
+      country: 'Portugal',
+    ),
     City(
       name: 'Londres',
       latitude: 51.51,
       longitude: -0.13,
       country: 'Royaume-Uni',
+    ),
+    City(name: 'Madrid', latitude: 40.42, longitude: -3.70, country: 'Espagne'),
+    City(name: 'Milan', latitude: 45.46, longitude: 9.19, country: 'Italie'),
+    City(name: 'Moscou', latitude: 55.76, longitude: 37.62, country: 'Russie'),
+    City(
+      name: 'Munich',
+      latitude: 48.14,
+      longitude: 11.58,
+      country: 'Allemagne',
+    ),
+    City(name: 'Oslo', latitude: 59.91, longitude: 10.75, country: 'Norvège'),
+    City(name: 'Paris', latitude: 48.86, longitude: 2.35, country: 'France'),
+    City(
+      name: 'Prague',
+      latitude: 50.08,
+      longitude: 14.44,
+      country: 'République tchèque',
+    ),
+    City(name: 'Rome', latitude: 41.90, longitude: 12.50, country: 'Italie'),
+    City(
+      name: 'Stockholm',
+      latitude: 59.33,
+      longitude: 18.07,
+      country: 'Suède',
+    ),
+    City(
+      name: 'Vienne',
+      latitude: 48.21,
+      longitude: 16.37,
+      country: 'Autriche',
+    ),
+    City(name: 'Zurich', latitude: 47.38, longitude: 8.54, country: 'Suisse'),
+
+    // ----------------------------------------------------------
+    // ASIE
+    // ----------------------------------------------------------
+    City(
+      name: 'Bangkok',
+      latitude: 13.75,
+      longitude: 100.52,
+      country: 'Thaïlande',
+    ),
+    City(name: 'Hanoï', latitude: 21.03, longitude: 105.85, country: 'Vietnam'),
+    City(
+      name: 'Hong Kong',
+      latitude: 22.32,
+      longitude: 114.17,
+      country: 'Chine',
+    ),
+    City(
+      name: 'Jakarta',
+      latitude: -6.21,
+      longitude: 106.85,
+      country: 'Indonésie',
+    ),
+    City(
+      name: 'Kuala Lumpur',
+      latitude: 3.14,
+      longitude: 101.69,
+      country: 'Malaisie',
+    ),
+    City(
+      name: 'Manille',
+      latitude: 14.60,
+      longitude: 120.98,
+      country: 'Philippines',
+    ),
+    City(name: 'Mumbai', latitude: 19.08, longitude: 72.88, country: 'Inde'),
+    City(name: 'New Delhi', latitude: 28.61, longitude: 77.21, country: 'Inde'),
+    City(name: 'Osaka', latitude: 34.69, longitude: 135.50, country: 'Japon'),
+    City(
+      name: 'Séoul',
+      latitude: 37.57,
+      longitude: 126.98,
+      country: 'Corée du Sud',
+    ),
+    City(
+      name: 'Shanghai',
+      latitude: 31.23,
+      longitude: 121.47,
+      country: 'Chine',
+    ),
+    City(
+      name: 'Singapour',
+      latitude: 1.35,
+      longitude: 103.82,
+      country: 'Singapour',
+    ),
+    City(name: 'Taipei', latitude: 25.03, longitude: 121.56, country: 'Taïwan'),
+    City(name: 'Tokyo', latitude: 35.68, longitude: 139.69, country: 'Japon'),
+
+    // ----------------------------------------------------------
+    // MOYEN-ORIENT
+    // ----------------------------------------------------------
+    City(
+      name: 'Abou Dabi',
+      latitude: 24.45,
+      longitude: 54.38,
+      country: 'Émirats arabes unis',
+    ),
+    City(name: 'Amman', latitude: 31.95, longitude: 35.93, country: 'Jordanie'),
+    City(name: 'Bagdad', latitude: 33.31, longitude: 44.37, country: 'Irak'),
+    City(name: 'Doha', latitude: 25.29, longitude: 51.53, country: 'Qatar'),
+    City(
+      name: 'Dubaï',
+      latitude: 25.20,
+      longitude: 55.27,
+      country: 'Émirats arabes unis',
+    ),
+    City(
+      name: 'Jérusalem',
+      latitude: 31.77,
+      longitude: 35.21,
+      country: 'Israël',
+    ),
+    City(
+      name: 'La Mecque',
+      latitude: 21.39,
+      longitude: 39.86,
+      country: 'Arabie saoudite',
+    ),
+    City(
+      name: 'Médine',
+      latitude: 24.47,
+      longitude: 39.61,
+      country: 'Arabie saoudite',
+    ),
+    City(
+      name: 'Riyad',
+      latitude: 24.71,
+      longitude: 46.68,
+      country: 'Arabie saoudite',
+    ),
+
+    // ----------------------------------------------------------
+    // AMÉRIQUE DU NORD
+    // ----------------------------------------------------------
+    City(
+      name: 'Atlanta',
+      latitude: 33.75,
+      longitude: -84.39,
+      country: 'États-Unis',
+    ),
+    City(
+      name: 'Boston',
+      latitude: 42.36,
+      longitude: -71.06,
+      country: 'États-Unis',
+    ),
+    City(
+      name: 'Chicago',
+      latitude: 41.88,
+      longitude: -87.63,
+      country: 'États-Unis',
+    ),
+    City(
+      name: 'Las Vegas',
+      latitude: 36.17,
+      longitude: -115.14,
+      country: 'États-Unis',
+    ),
+    City(
+      name: 'Los Angeles',
+      latitude: 34.05,
+      longitude: -118.24,
+      country: 'États-Unis',
+    ),
+    City(
+      name: 'Miami',
+      latitude: 25.76,
+      longitude: -80.19,
+      country: 'États-Unis',
+    ),
+    City(
+      name: 'Montréal',
+      latitude: 45.50,
+      longitude: -73.57,
+      country: 'Canada',
     ),
     City(
       name: 'New York',
@@ -56,15 +334,113 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       longitude: -74.01,
       country: 'États-Unis',
     ),
-    City(name: 'Paris', latitude: 48.86, longitude: 2.35, country: 'France'),
-    City(name: 'Tokyo', latitude: 35.68, longitude: 139.69, country: 'Japon'),
     City(
-      name: 'Yamoussoukro',
-      latitude: 6.83,
-      longitude: -5.29,
-      country: "Côte d'Ivoire",
+      name: 'San Francisco',
+      latitude: 37.77,
+      longitude: -122.42,
+      country: 'États-Unis',
+    ),
+    City(
+      name: 'Toronto',
+      latitude: 43.65,
+      longitude: -79.38,
+      country: 'Canada',
+    ),
+    City(
+      name: 'Vancouver',
+      latitude: 49.28,
+      longitude: -123.12,
+      country: 'Canada',
+    ),
+    City(
+      name: 'Washington',
+      latitude: 38.91,
+      longitude: -77.04,
+      country: 'États-Unis',
+    ),
+
+    // ----------------------------------------------------------
+    // AMÉRIQUE DU SUD
+    // ----------------------------------------------------------
+    City(
+      name: 'Buenos Aires',
+      latitude: -34.60,
+      longitude: -58.38,
+      country: 'Argentine',
+    ),
+    City(name: 'Lima', latitude: -12.05, longitude: -77.04, country: 'Pérou'),
+    City(
+      name: 'Medellín',
+      latitude: 6.24,
+      longitude: -75.58,
+      country: 'Colombie',
+    ),
+    City(
+      name: 'Rio de Janeiro',
+      latitude: -22.91,
+      longitude: -43.17,
+      country: 'Brésil',
+    ),
+    City(
+      name: 'Santiago',
+      latitude: -33.45,
+      longitude: -70.67,
+      country: 'Chili',
+    ),
+    City(
+      name: 'São Paulo',
+      latitude: -23.55,
+      longitude: -46.63,
+      country: 'Brésil',
+    ),
+
+    // ----------------------------------------------------------
+    // OCÉANIE
+    // ----------------------------------------------------------
+    City(
+      name: 'Auckland',
+      latitude: -36.85,
+      longitude: 174.76,
+      country: 'Nouvelle-Zélande',
+    ),
+    City(
+      name: 'Melbourne',
+      latitude: -37.81,
+      longitude: 144.96,
+      country: 'Australie',
+    ),
+    City(
+      name: 'Sydney',
+      latitude: -33.87,
+      longitude: 151.21,
+      country: 'Australie',
     ),
   ];
+
+  // ============================================================
+  // 8 VILLES POPULAIRES TIRÉES ALÉATOIREMENT
+  // ============================================================
+
+  late List<City> displayedPopularCities;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // On choisit les villes UNE SEULE FOIS à l'ouverture
+    // de la page afin qu'elles ne changent pas à chaque setState().
+    displayedPopularCities = _getRandomPopularCities(8);
+  }
+
+  List<City> _getRandomPopularCities(int count) {
+    final cities = [...popularCities];
+
+    cities.shuffle();
+
+    final safeCount = count.clamp(0, cities.length).toInt();
+
+    return cities.take(safeCount).toList();
+  }
 
   @override
   void dispose() {
@@ -73,7 +449,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  // ============================================================
   // RECHERCHE
+  // ============================================================
 
   void _onSearchChanged(String value) {
     _debounce?.cancel();
@@ -87,7 +465,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
+  // ============================================================
   // NAVIGATION
+  // ============================================================
 
   void _openWeather(City city) {
     FocusManager.instance.primaryFocus?.unfocus();
@@ -138,7 +518,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  // ============================================================
   // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -148,11 +530,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? ref.watch(citySearchProvider(_query))
         : null;
 
+    final visiblePopularCities = _showAllPopularCities
+        ? displayedPopularCities
+        : displayedPopularCities.take(4).toList();
+
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
+            // ==================================================
             // HEADER FIXE
+            // ==================================================
 
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
@@ -161,7 +549,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
             const SizedBox(height: 18),
 
+            // ==================================================
             // RECHERCHE FIXE
+            // ==================================================
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _buildSearch(),
@@ -169,7 +559,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
             const SizedBox(height: 4),
 
+            // ==================================================
             // CONTENU SCROLLABLE
+            // ==================================================
             Expanded(
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -182,7 +574,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     )
                   else ...[
+                    // ==========================================
                     // VILLES POPULAIRES
+                    // ==========================================
 
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
@@ -203,11 +597,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _showAllPopularCities
-                                  ? popularCities.length
-                                  : popularCities.length > 4
-                                  ? 4
-                                  : popularCities.length,
+                              itemCount: visiblePopularCities.length,
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 2,
@@ -216,11 +606,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     childAspectRatio: 1.18,
                                   ),
                               itemBuilder: (context, index) {
-                                return _cityCard(popularCities[index]);
+                                return _cityCard(visiblePopularCities[index]);
                               },
                             ),
 
-                            if (popularCities.length > 4)
+                            // Le bouton apparaît uniquement si
+                            // nous avons plus de 4 villes disponibles.
+                            if (displayedPopularCities.length > 4)
                               _sectionMoreButton(
                                 label: _showAllPopularCities
                                     ? 'Voir moins'
@@ -240,7 +632,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ),
 
+                    // ==========================================
                     // FAVORIS
+                    // ==========================================
                     if (favorites.isNotEmpty) ...[
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
@@ -306,7 +700,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // BOUTON VOIR PLUS / VOIR MOINS
+  // ============================================================
 
   Widget _sectionMoreButton({
     required String label,
@@ -339,7 +735,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // HEADER
+  // ============================================================
 
   Widget _buildHeader(int favoriteCount) {
     final hour = DateTime.now().hour;
@@ -443,7 +841,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // ACTION HEADER
+  // ============================================================
 
   Widget _headerAction({
     required IconData icon,
@@ -468,7 +868,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // FAVORIS HEADER
+  // ============================================================
 
   Widget _favoriteButton(int favoriteCount) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -535,7 +937,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // RECHERCHE
+  // ============================================================
 
   Widget _buildSearch() {
     final theme = Theme.of(context);
@@ -594,7 +998,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // RÉSULTATS RECHERCHE
+  // ============================================================
 
   Widget _buildSearchResults(AsyncValue<List<City>> async) {
     return async.when(
@@ -673,10 +1079,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // CARTE VILLE
+  // ============================================================
 
   Widget _cityCard(City city) {
     final favorite = ref.watch(favoritesProvider).contains(city);
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return FutureBuilder<String?>(
@@ -813,7 +1222,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // FOND DE SECOURS
+  // ============================================================
 
   Widget _cityFallbackBackground(bool isDark) {
     return Container(
@@ -832,7 +1243,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // FAVORIS
+  // ============================================================
 
   Widget _favoritePreview(City city) {
     final theme = Theme.of(context);
@@ -873,7 +1286,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // FAVORIS VIDES
+  // ============================================================
 
   Widget _emptyFavoritesHint() {
     final theme = Theme.of(context);
@@ -929,7 +1344,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  // ============================================================
   // TITRE DE SECTION
+  // ============================================================
 
   Widget _sectionTitle(String title, String subtitle, IconData icon) {
     final theme = Theme.of(context);
@@ -981,7 +1398,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
+// ============================================================
 // RECHERCHE : CHARGEMENT
+// ============================================================
 
 class _SearchLoading extends StatelessWidget {
   const _SearchLoading();
@@ -1014,7 +1433,9 @@ class _SearchLoading extends StatelessWidget {
   }
 }
 
+// ============================================================
 // RECHERCHE : MESSAGE
+// ============================================================
 
 class _SearchMessage extends StatelessWidget {
   final IconData icon;
