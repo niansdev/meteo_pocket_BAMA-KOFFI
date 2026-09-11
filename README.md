@@ -47,6 +47,9 @@ flutter build apk --release
 ### Écran principal de l'application
 ![Écran principal](capture_ecran/ecran_principal.png)
 
+### Écran principal de l'application en mode Dark
+![Écran principal](capture_ecran/ecran_principal_mode_dark.png)
+
 ### Écran de recherche d'une ville
 ![Écran de recherche](capture_ecran/ecran_de_recherche.png)
 

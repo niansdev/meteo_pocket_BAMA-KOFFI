@@ -11,8 +11,8 @@ import '../providers/location_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/city_images.dart';
 import 'favorites_screen.dart';
-import 'weather_detail_screen.dart';
 import 'settings_screen.dart';
+import 'weather_detail_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -22,11 +22,13 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-
   final TextEditingController _searchController = TextEditingController();
 
   Timer? _debounce;
   String _query = '';
+
+  bool _showAllPopularCities = false;
+  bool _showAllFavorites = false;
 
   final List<City> popularCities = const [
     City(
@@ -36,32 +38,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       country: "Côte d'Ivoire",
     ),
     City(
-      name: 'Yamoussoukro',
-      latitude: 6.83,
-      longitude: -5.29,
-      country: "Côte d'Ivoire",
-    ),
-    City(
       name: 'Bouaké',
       latitude: 7.69,
       longitude: -5.03,
       country: "Côte d'Ivoire",
     ),
     City(name: 'Dakar', latitude: 14.72, longitude: -17.47, country: 'Sénégal'),
-    City(name: 'Paris', latitude: 48.86, longitude: 2.35, country: 'France'),
-    City(
-      name: 'New York',
-      latitude: 40.71,
-      longitude: -74.01,
-      country: 'États-Unis',
-    ),
     City(
       name: 'Londres',
       latitude: 51.51,
       longitude: -0.13,
       country: 'Royaume-Uni',
     ),
+    City(
+      name: 'New York',
+      latitude: 40.71,
+      longitude: -74.01,
+      country: 'États-Unis',
+    ),
+    City(name: 'Paris', latitude: 48.86, longitude: 2.35, country: 'France'),
     City(name: 'Tokyo', latitude: 35.68, longitude: 139.69, country: 'Japon'),
+    City(
+      name: 'Yamoussoukro',
+      latitude: 6.83,
+      longitude: -5.29,
+      country: "Côte d'Ivoire",
+    ),
   ];
 
   @override
@@ -195,17 +197,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      sliver: SliverGrid(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          return _cityCard(popularCities[index]);
-                        }, childCount: popularCities.length),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: 1.18,
+                      sliver: SliverToBoxAdapter(
+                        child: Column(
+                          children: [
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _showAllPopularCities
+                                  ? popularCities.length
+                                  : popularCities.length > 4
+                                  ? 4
+                                  : popularCities.length,
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                    childAspectRatio: 1.18,
+                                  ),
+                              itemBuilder: (context, index) {
+                                return _cityCard(popularCities[index]);
+                              },
                             ),
+
+                            if (popularCities.length > 4)
+                              _sectionMoreButton(
+                                label: _showAllPopularCities
+                                    ? 'Voir moins'
+                                    : 'Voir plus',
+                                icon: _showAllPopularCities
+                                    ? Icons.keyboard_arrow_up_rounded
+                                    : Icons.keyboard_arrow_down_rounded,
+                                onPressed: () {
+                                  setState(() {
+                                    _showAllPopularCities =
+                                        !_showAllPopularCities;
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -229,10 +260,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 30),
                         sliver: SliverToBoxAdapter(
                           child: Column(
-                            children: favorites
-                                .take(3)
-                                .map(_favoritePreview)
-                                .toList(),
+                            children: [
+                              ...favorites
+                                  .take(
+                                    _showAllFavorites
+                                        ? favorites.length
+                                        : favorites.length > 4
+                                        ? 4
+                                        : favorites.length,
+                                  )
+                                  .map(_favoritePreview),
+
+                              if (favorites.length > 4)
+                                _sectionMoreButton(
+                                  label: _showAllFavorites
+                                      ? 'Voir moins'
+                                      : 'Voir plus',
+                                  icon: _showAllFavorites
+                                      ? Icons.keyboard_arrow_up_rounded
+                                      : Icons.keyboard_arrow_down_rounded,
+                                  onPressed: () {
+                                    setState(() {
+                                      _showAllFavorites = !_showAllFavorites;
+                                    });
+                                  },
+                                ),
+                            ],
                           ),
                         ),
                       ),
@@ -248,6 +301,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // BOUTON VOIR PLUS / VOIR MOINS
+
+  Widget _sectionMoreButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: TextButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 19),
+          label: Text(
+            label,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          ),
+          style: TextButton.styleFrom(
+            foregroundColor: isDark ? Colors.white : AppColors.navy,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
         ),
       ),
     );
@@ -607,8 +693,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // PHOTO
-
                 if (imageUrl != null && imageUrl.isNotEmpty)
                   Image.network(
                     imageUrl,
@@ -628,7 +712,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 else
                   _cityFallbackBackground(isDark),
 
-                // VOILE DISCRET
                 const DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -640,7 +723,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
 
-                // PETIT INDICATEUR FAVORI
                 Positioned(
                   top: 11,
                   right: 11,
@@ -661,7 +743,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
 
-                // NOM DE LA VILLE
                 Positioned(
                   left: 13,
                   right: 13,
@@ -697,7 +778,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
 
-                // CHARGEMENT
                 if (snapshot.connectionState == ConnectionState.waiting &&
                     imageUrl == null)
                   Positioned(
@@ -767,7 +847,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 2),
         onTap: () => _openWeather(city),
-
         leading: Container(
           width: 42,
           height: 42,
@@ -775,16 +854,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             color: AppColors.orange.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.favorite_rounded, color: AppColors.orange, size: 20),
+          child: const Icon(
+            Icons.favorite_rounded,
+            color: AppColors.orange,
+            size: 20,
+          ),
         ),
-
         title: Text(
           city.name,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
         ),
-
         subtitle: Text(city.country, style: const TextStyle(fontSize: 12)),
-
         trailing: Icon(
           Icons.chevron_right_rounded,
           color: theme.colorScheme.onSurfaceVariant,
@@ -808,7 +888,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.favorite_border_rounded, color: AppColors.green, size: 25),
+          const Icon(
+            Icons.favorite_border_rounded,
+            color: AppColors.green,
+            size: 25,
+          ),
 
           const SizedBox(width: 13),
 
