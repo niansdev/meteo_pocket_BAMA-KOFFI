@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_colors.dart';
@@ -33,8 +34,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   late final List<City> _displayedPopularCities;
 
-  // Cache utilisé pour conserver les quatre favoris tirés au hasard
-  // pendant les rebuilds de l'écran.
   List<City> _randomFavorites = [];
   String _favoritesSignature = '';
 
@@ -435,6 +434,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _openWeather(City city) {
     FocusManager.instance.primaryFocus?.unfocus();
 
+    HapticFeedback.selectionClick();
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => WeatherDetailScreen(city: city)),
@@ -442,6 +443,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _openSettings() {
+    HapticFeedback.selectionClick();
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const SettingsScreen()),
@@ -449,6 +452,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _openFavorites() {
+    HapticFeedback.selectionClick();
+
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const FavoritesScreen()),
@@ -456,6 +461,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _openCurrentLocation() async {
+    HapticFeedback.lightImpact();
+
     try {
       final position = await ref.read(currentLocationProvider.future);
 
@@ -479,7 +486,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final message = error.toString().replaceFirst('Exception: ', '');
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(behavior: SnackBarBehavior.floating, content: Text(message)),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          content: Row(
+            children: [
+              const Icon(Icons.location_off_rounded, color: Colors.white),
+              const SizedBox(width: 10),
+              Expanded(child: Text(message)),
+            ],
+          ),
+        ),
       );
     }
   }
@@ -489,8 +509,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         .map((city) => '${city.name}|${city.latitude}|${city.longitude}')
         .join('||');
 
-    // Le tirage est recalculé uniquement lorsque la liste des favoris
-    // change. Ainsi, les cartes ne changent pas à chaque rebuild.
     if (signature != _favoritesSignature) {
       _favoritesSignature = signature;
 
@@ -526,15 +544,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
               child: _buildHeader(favorites.length),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _buildSearch(),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Expanded(
               child: CustomScrollView(
                 physics: const BouncingScrollPhysics(),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 slivers: [
                   if (_query.length >= 2)
                     SliverPadding(
@@ -555,6 +575,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ? 'Voir moins'
                               : 'Voir plus',
                           onPressed: () {
+                            HapticFeedback.selectionClick();
+
                             setState(() {
                               _showAllPopularCities = !_showAllPopularCities;
                             });
@@ -579,7 +601,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                     if (favorites.isNotEmpty) ...[
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
+                        padding: const EdgeInsets.fromLTRB(20, 30, 20, 12),
                         sliver: SliverToBoxAdapter(
                           child: _sectionTitleWithAction(
                             title: 'Vos favoris',
@@ -602,7 +624,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                     ] else
                       SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(20, 28, 20, 30),
+                        padding: const EdgeInsets.fromLTRB(20, 30, 20, 30),
                         sliver: SliverToBoxAdapter(
                           child: _emptyFavoritesHint(),
                         ),
@@ -659,7 +681,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   color: isDark ? Colors.white : AppColors.navy,
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
+                  letterSpacing: -0.6,
                 ),
               ),
               const SizedBox(height: 2),
@@ -673,7 +695,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -683,7 +705,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               tooltip: 'Ma position',
               onTap: _openCurrentLocation,
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 3),
             Consumer(
               builder: (context, ref, child) {
                 final isDarkMode = ref.watch(themeProvider) == ThemeMode.dark;
@@ -695,19 +717,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   color: isDark ? Colors.white70 : AppColors.navy,
                   tooltip: isDarkMode ? 'Mode clair' : 'Mode sombre',
                   onTap: () {
+                    HapticFeedback.selectionClick();
                     ref.read(themeProvider.notifier).toggle();
                   },
                 );
               },
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 3),
             _headerAction(
               icon: Icons.settings_outlined,
               color: isDark ? Colors.white70 : AppColors.navy,
               tooltip: 'Paramètres',
               onTap: _openSettings,
             ),
-            const SizedBox(width: 7),
+            const SizedBox(width: 3),
             _favoriteButton(favoriteCount),
           ],
         ),
@@ -721,17 +744,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required String tooltip,
     required VoidCallback onTap,
   }) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(13),
-          child: SizedBox(
-            width: 42,
-            height: 42,
-            child: Icon(icon, color: color, size: 21),
+    return Semantics(
+      button: true,
+      label: tooltip,
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          child: InkResponse(
+            onTap: onTap,
+            radius: 26,
+            containedInkWell: true,
+            highlightShape: BoxShape.circle,
+            child: SizedBox(
+              width: 44,
+              height: 44,
+              child: Icon(icon, color: color, size: 21),
+            ),
           ),
         ),
       ),
@@ -739,65 +768,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _favoriteButton(int favoriteCount) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return Tooltip(
-      message: 'Favoris',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _openFavorites,
-          borderRadius: BorderRadius.circular(13),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.07)
-                      : AppColors.green.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(13),
+    return Semantics(
+      button: true,
+      label: 'Favoris',
+      child: Tooltip(
+        message: 'Favoris',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _openFavorites,
+            borderRadius: BorderRadius.circular(14),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.07)
+                        : AppColors.green.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    favoriteCount > 0
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: favoriteCount > 0
+                        ? AppColors.orange
+                        : isDark
+                        ? Colors.white70
+                        : AppColors.green,
+                    size: 21,
+                  ),
                 ),
-                child: Icon(
-                  favoriteCount > 0
-                      ? Icons.favorite_rounded
-                      : Icons.favorite_border_rounded,
-                  color: favoriteCount > 0
-                      ? AppColors.orange
-                      : isDark
-                      ? Colors.white70
-                      : AppColors.green,
-                  size: 21,
-                ),
-              ),
-              if (favoriteCount > 0)
-                Positioned(
-                  top: -3,
-                  right: -3,
-                  child: Container(
-                    constraints: const BoxConstraints(
-                      minWidth: 17,
-                      minHeight: 17,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: const BoxDecoration(
-                      color: AppColors.orange,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      '$favoriteCount',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
+                if (favoriteCount > 0)
+                  Positioned(
+                    top: -3,
+                    right: -3,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.orange,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$favoriteCount',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -808,13 +842,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      height: 52,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      height: 54,
       decoration: BoxDecoration(
         color: isDark
             ? Colors.white.withValues(alpha: 0.06)
             : const Color(0xFFF3F5F7),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.06)
@@ -840,6 +875,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           suffixIcon: _query.isNotEmpty
               ? IconButton(
                   tooltip: 'Effacer',
+                  splashRadius: 22,
                   onPressed: _clearSearch,
                   icon: Icon(
                     Icons.close_rounded,
@@ -849,7 +885,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          contentPadding: const EdgeInsets.symmetric(vertical: 16),
         ),
       ),
     );
@@ -858,6 +894,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _clearSearch() {
     _searchTimer?.cancel();
     _searchController.clear();
+
+    HapticFeedback.selectionClick();
 
     setState(() {
       _query = '';
@@ -915,10 +953,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           margin: const EdgeInsets.only(bottom: 12),
           child: Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
             clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: () => _openWeather(city),
+              splashColor: Colors.white.withValues(alpha: 0.12),
+              highlightColor: Colors.white.withValues(alpha: 0.06),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -932,7 +972,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Color(0x15000000), Color(0xD9000000)],
+                        colors: [Color(0x15000000), Color(0xE6000000)],
                       ),
                     ),
                   ),
@@ -943,8 +983,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Row(
                       children: [
                         Container(
-                          width: 38,
-                          height: 38,
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.28),
                             shape: BoxShape.circle,
@@ -956,10 +996,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         ),
                         const Spacer(),
-                        const Icon(
-                          Icons.chevron_right_rounded,
-                          color: Colors.white,
-                          size: 25,
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.25),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
                       ],
                     ),
@@ -1068,114 +1116,125 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isFavorite = favorites.contains(city);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return FutureBuilder<String?>(
-      future: CityImages.getImageUrl(city),
-      builder: (context, snapshot) {
-        final imageUrl = snapshot.data;
+    return Semantics(
+      button: true,
+      label: 'Ouvrir la météo de ${city.name}',
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => _openWeather(city),
+          splashColor: Colors.white.withValues(alpha: 0.14),
+          highlightColor: Colors.white.withValues(alpha: 0.07),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              FutureBuilder<String?>(
+                future: CityImages.getImageUrl(city),
+                builder: (context, snapshot) {
+                  final imageUrl = snapshot.data;
 
-        return Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: () => _openWeather(city),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                _buildImage(
-                  imageUrl: imageUrl,
-                  isDark: isDark,
-                  fallback: _cityFallbackBackground(isDark),
-                ),
-                const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      stops: [0.35, 1.0],
-                      colors: [Colors.transparent, Color(0xCC000000)],
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 11,
-                  right: 11,
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.28),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isFavorite
-                          ? Icons.favorite_rounded
-                          : Icons.favorite_border_rounded,
-                      color: isFavorite ? AppColors.orange : Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 13,
-                  right: 13,
-                  bottom: 12,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  return Stack(
+                    fit: StackFit.expand,
                     children: [
-                      Text(
-                        city.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.1,
-                        ),
+                      _buildImage(
+                        imageUrl: imageUrl,
+                        isDark: isDark,
+                        fallback: _cityFallbackBackground(isDark),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        city.country,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                if (snapshot.connectionState == ConnectionState.waiting &&
-                    imageUrl == null)
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: Center(
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          padding: const EdgeInsets.all(5),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.30),
-                            shape: BoxShape.circle,
+                      const DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            stops: [0.30, 1.0],
+                            colors: [Colors.transparent, Color(0xD9000000)],
                           ),
-                          child: const CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
+                        ),
+                      ),
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          imageUrl == null)
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: Center(
+                              child: Container(
+                                width: 30,
+                                height: 30,
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.30),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
+                    ],
+                  );
+                },
+              ),
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.30),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isFavorite
+                        ? Icons.favorite_rounded
+                        : Icons.favorite_border_rounded,
+                    color: isFavorite ? AppColors.orange : Colors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 13,
+                right: 13,
+                bottom: 12,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      city.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.1,
                       ),
                     ),
-                  ),
-              ],
-            ),
+                    const SizedBox(height: 2),
+                    Text(
+                      city.country,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -1198,36 +1257,73 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 9),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.45)),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.40)),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 2),
-        onTap: () => _openWeather(city),
-        leading: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: AppColors.orange.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(15),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => _openWeather(city),
+          splashColor: AppColors.orange.withValues(alpha: 0.08),
+          highlightColor: AppColors.orange.withValues(alpha: 0.04),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.orange.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(
+                    Icons.favorite_rounded,
+                    color: AppColors.orange,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        city.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        city.country,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  size: 23,
+                ),
+              ],
+            ),
           ),
-          child: const Icon(
-            Icons.favorite_rounded,
-            color: AppColors.orange,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          city.name,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-        ),
-        subtitle: Text(city.country, style: const TextStyle(fontSize: 12)),
-        trailing: Icon(
-          Icons.chevron_right_rounded,
-          color: theme.colorScheme.onSurfaceVariant,
         ),
       ),
     );
@@ -1237,49 +1333,71 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.green.withValues(alpha: isDark ? 0.08 : 0.055),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.favorite_border_rounded,
-            color: AppColors.green,
-            size: 25,
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: _openFavorites,
+        borderRadius: BorderRadius.circular(16),
+        splashColor: AppColors.green.withValues(alpha: 0.08),
+        child: Ink(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.green.withValues(alpha: isDark ? 0.08 : 0.055),
+            borderRadius: BorderRadius.circular(16),
           ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Aucune ville favorite',
-                  style: TextStyle(
-                    color: isDark
-                        ? const Color(0xFF7BE3AD)
-                        : const Color(0xFF176B4A),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.green.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Ajoutez vos villes préférées depuis leur '
-                  'page météo pour les retrouver rapidement ici.',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 12,
-                    height: 1.4,
-                  ),
+                child: const Icon(
+                  Icons.favorite_border_rounded,
+                  color: AppColors.green,
+                  size: 23,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Aucune ville favorite',
+                      style: TextStyle(
+                        color: isDark
+                            ? const Color(0xFF7BE3AD)
+                            : const Color(0xFF176B4A),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Ajoutez vos villes préférées depuis leur '
+                      'page météo pour les retrouver rapidement ici.',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1298,11 +1416,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 38,
-          height: 38,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: AppColors.orange.withValues(alpha: 0.09),
-            borderRadius: BorderRadius.circular(11),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: AppColors.orange, size: 20),
         ),
@@ -1332,19 +1450,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        TextButton(
-          onPressed: onPressed,
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: Text(
-            buttonText,
-            style: const TextStyle(
-              color: AppColors.orange,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+        Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onPressed();
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    buttonText,
+                    style: const TextStyle(
+                      color: AppColors.orange,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.orange,
+                    size: 17,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1362,7 +1497,7 @@ class _SearchLoading extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(15),
       ),
       child: const Row(
         children: [
@@ -1397,7 +1532,7 @@ class _SearchMessage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 30),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
         children: [

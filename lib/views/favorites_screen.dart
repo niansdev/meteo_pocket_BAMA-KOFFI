@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/app_colors.dart';
@@ -12,7 +13,8 @@ class FavoritesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final favorites = ref.watch(favoritesProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -22,64 +24,36 @@ class FavoritesScreen extends ConsumerWidget {
         ),
         actions: [
           if (favorites.isNotEmpty)
-            PopupMenuButton<String>(
-              tooltip: 'Options',
-              onSelected: (value) {
-                if (value == 'clear') {
-                  _confirmClear(context, ref);
-                }
-              },
-              itemBuilder: (_) => const [
-                PopupMenuItem(
-                  value: 'clear',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete_sweep_outlined),
-                      SizedBox(width: 10),
-                      Text('Tout supprimer'),
-                    ],
-                  ),
-                ),
-              ],
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: _AppBarAction(
+                icon: Icons.delete_sweep_outlined,
+                tooltip: 'Tout supprimer',
+                onTap: () => _confirmClear(context, ref),
+              ),
             ),
         ],
       ),
       body: favorites.isEmpty
-          ? _EmptyFavorites(onBack: () => Navigator.pop(context))
+          ? const _EmptyFavorites()
           : ListView(
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(18, 12, 18, 30),
               children: [
                 _Header(count: favorites.length),
-                const SizedBox(height: 20),
-
-                Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: AppColors.orange,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 9),
-                    Text(
-                      'Vos villes',
-                      style: TextStyle(
-                        color: isDark ? const Color(0xFFF5F7FA) : AppColors.navy,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 22),
+                _SectionHeader(
+                  title: 'Vos villes',
+                  icon: Icons.location_city_outlined,
+                  isDark: isDark,
                 ),
-
                 const SizedBox(height: 10),
-
                 ...favorites.map(
                   (city) => _FavoriteTile(
                     city: city,
                     onOpen: () {
+                      HapticFeedback.lightImpact();
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -87,55 +61,178 @@ class FavoritesScreen extends ConsumerWidget {
                         ),
                       );
                     },
-                    onDelete: () => ref
-                        .read(favoritesProvider.notifier)
-                        .removeFavorite(city),
+                    onDelete: () => _removeFavorite(context, ref, city),
+                    onLongPress: () => _showQuickActions(context, ref, city),
                   ),
                 ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  'Faites glisser une ville vers la gauche pour la supprimer.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontSize: 11,
-                  ),
-                ),
+                const SizedBox(height: 10),
+                _SwipeHint(isDark: isDark),
               ],
             ),
     );
   }
 
+  Future<void> _removeFavorite(
+    BuildContext context,
+    WidgetRef ref,
+    City city,
+  ) async {
+    HapticFeedback.mediumImpact();
+
+    await ref.read(favoritesProvider.notifier).removeFavorite(city);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text('${city.name} supprimée des favoris'),
+          action: SnackBarAction(label: 'OK', onPressed: () {}),
+        ),
+      );
+  }
+
   Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
+    HapticFeedback.lightImpact();
+
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text(
-          'Effacer les favoris ?',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        content: const Text(
-          'Toutes les villes enregistrées seront retirées de votre liste.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Annuler'),
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Effacer les favoris ?',
+            style: TextStyle(fontWeight: FontWeight.w700),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.orange),
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Effacer'),
+          content: const Text(
+            'Toutes les villes enregistrées seront retirées de votre liste.',
           ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Annuler'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.orange),
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                Navigator.pop(dialogContext, true);
+              },
+              child: const Text('Effacer'),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirm == true) {
       await ref.read(favoritesProvider.notifier).clearAll();
+
+      if (!context.mounted) return;
+
+      HapticFeedback.heavyImpact();
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            behavior: SnackBarBehavior.floating,
+            content: Text('Tous les favoris ont été supprimés'),
+          ),
+        );
     }
+  }
+
+  Future<void> _showQuickActions(
+    BuildContext context,
+    WidgetRef ref,
+    City city,
+  ) async {
+    HapticFeedback.mediumImpact();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 4, 18, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _BottomSheetTitle(city: city),
+                const SizedBox(height: 12),
+                _BottomSheetAction(
+                  icon: Icons.cloud_outlined,
+                  title: 'Voir la météo',
+                  subtitle: 'Consulter les prévisions de ${city.name}',
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.pop(sheetContext);
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => WeatherDetailScreen(city: city),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                _BottomSheetAction(
+                  icon: Icons.delete_outline_rounded,
+                  title: 'Supprimer des favoris',
+                  subtitle: 'Retirer ${city.name} de votre liste',
+                  isDestructive: true,
+                  onTap: () async {
+                    HapticFeedback.mediumImpact();
+                    Navigator.pop(sheetContext);
+                    await _removeFavorite(context, ref, city);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AppBarAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _AppBarAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(13),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(13),
+          onTap: onTap,
+          child: SizedBox(
+            width: 42,
+            height: 42,
+            child: Icon(icon, size: 21, color: AppColors.orange),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -146,13 +243,14 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF19344D) : const Color(0xFFF1F8F5),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: AppColors.green.withValues(alpha: isDark ? .25 : .12),
         ),
@@ -160,14 +258,14 @@ class _Header extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               color: AppColors.green.withValues(alpha: .12),
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.favorite_outline_rounded,
+              Icons.favorite_rounded,
               color: AppColors.green,
               size: 25,
             ),
@@ -181,19 +279,18 @@ class _Header extends StatelessWidget {
                   '$count ville${count > 1 ? 's' : ''} enregistrée'
                   '${count > 1 ? 's' : ''}',
                   style: TextStyle(
-                    color: isDark
-                        ? const Color(0xFFF5F7FA)
-                        : AppColors.navy,
+                    color: isDark ? const Color(0xFFF5F7FA) : AppColors.navy,
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
                 Text(
-                  'Accédez rapidement à vos prévisions météo.',
+                  'Retrouvez rapidement vos prévisions météo.',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 11,
+                    height: 1.3,
                   ),
                 ),
               ],
@@ -205,15 +302,56 @@ class _Header extends StatelessWidget {
   }
 }
 
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final bool isDark;
+
+  const _SectionHeader({
+    required this.title,
+    required this.icon,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 22,
+          decoration: BoxDecoration(
+            color: AppColors.orange,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 9),
+        Icon(icon, size: 19, color: isDark ? Colors.white : AppColors.navy),
+        const SizedBox(width: 7),
+        Text(
+          title,
+          style: TextStyle(
+            color: isDark ? Colors.white : AppColors.navy,
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _FavoriteTile extends StatelessWidget {
   final City city;
   final VoidCallback onOpen;
-  final VoidCallback onDelete;
+  final Future<void> Function() onDelete;
+  final VoidCallback onLongPress;
 
   const _FavoriteTile({
     required this.city,
     required this.onOpen,
     required this.onDelete,
+    required this.onLongPress,
   });
 
   @override
@@ -221,81 +359,244 @@ class _FavoriteTile extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Dismissible(
-      key: ValueKey('${city.name}-${city.latitude}-${city.longitude}'),
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (_) async {
-        onDelete();
-
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${city.name} supprimée des favoris'),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-
-        return true;
-      },
-      background: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 18),
-        decoration: BoxDecoration(
-          color: AppColors.orange,
-          borderRadius: BorderRadius.circular(14),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Dismissible(
+        key: ValueKey('${city.name}-${city.latitude}-${city.longitude}'),
+        direction: DismissDirection.endToStart,
+        confirmDismiss: (_) async {
+          await onDelete();
+          return true;
+        },
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 20),
+          decoration: BoxDecoration(
+            color: AppColors.orange,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(
+            Icons.delete_outline_rounded,
+            color: Colors.white,
+            size: 25,
+          ),
         ),
-        child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
-      ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
+        child: Material(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: .08)
-                : Colors.black.withValues(alpha: .06),
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onOpen,
+            onLongPress: onLongPress,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: .08)
+                      : Colors.black.withValues(alpha: .06),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: AppColors.green.withValues(alpha: .10),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: const Icon(
+                      Icons.location_on_outlined,
+                      color: AppColors.green,
+                      size: 23,
+                    ),
+                  ),
+                  const SizedBox(width: 13),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          city.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isDark
+                                ? const Color(0xFFF5F7FA)
+                                : AppColors.navy,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          city.country,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
-        child: ListTile(
-          onTap: onOpen,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 4,
+      ),
+    );
+  }
+}
+
+class _SwipeHint extends StatelessWidget {
+  final bool isDark;
+
+  const _SwipeHint({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.swipe_left_rounded,
+          size: 17,
+          color: isDark
+              ? Colors.white.withValues(alpha: .55)
+              : AppColors.navy.withValues(alpha: .55),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          'Glissez vers la gauche pour supprimer',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 11,
           ),
-          leading: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.green.withValues(alpha: .10),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.location_on_outlined,
-              color: AppColors.green,
-              size: 22,
-            ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BottomSheetTitle extends StatelessWidget {
+  final City city;
+
+  const _BottomSheetTitle({required this.city});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Row(
+      children: [
+        Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: AppColors.green.withValues(alpha: .10),
+            borderRadius: BorderRadius.circular(13),
           ),
-          title: Text(
-            city.name,
-            style: TextStyle(
-              color: isDark ? const Color(0xFFF5F7FA) : AppColors.navy,
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-            ),
+          child: const Icon(Icons.location_on_rounded, color: AppColors.green),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                city.name,
+                style: TextStyle(
+                  color: isDark ? Colors.white : AppColors.navy,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 17,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                city.country,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
-          subtitle: Text(
-            city.subtitle,
-            style: TextStyle(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 11,
-            ),
-          ),
-          trailing: Icon(
-            Icons.chevron_right_rounded,
-            color: theme.colorScheme.onSurfaceVariant,
+        ),
+      ],
+    );
+  }
+}
+
+class _BottomSheetAction extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool isDestructive;
+
+  const _BottomSheetAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.isDestructive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDestructive ? AppColors.orange : AppColors.green;
+
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(15),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(13),
+          child: Row(
+            children: [
+              Container(
+                width: 43,
+                height: 43,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded),
+            ],
           ),
         ),
       ),
@@ -304,9 +605,7 @@ class _FavoriteTile extends StatelessWidget {
 }
 
 class _EmptyFavorites extends StatelessWidget {
-  final VoidCallback onBack;
-
-  const _EmptyFavorites({required this.onBack});
+  const _EmptyFavorites();
 
   @override
   Widget build(BuildContext context) {
@@ -314,14 +613,14 @@ class _EmptyFavorites extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 90,
-              height: 90,
+              width: 94,
+              height: 94,
               decoration: BoxDecoration(
                 color: AppColors.green.withValues(alpha: .09),
                 shape: BoxShape.circle,
@@ -329,7 +628,7 @@ class _EmptyFavorites extends StatelessWidget {
               child: const Icon(
                 Icons.favorite_border_rounded,
                 color: AppColors.green,
-                size: 45,
+                size: 46,
               ),
             ),
             const SizedBox(height: 22),
@@ -352,9 +651,12 @@ class _EmptyFavorites extends StatelessWidget {
                 height: 1.45,
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 24),
             FilledButton.icon(
-              onPressed: onBack,
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.pop(context);
+              },
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.orange,
                 padding: const EdgeInsets.symmetric(
