@@ -30,11 +30,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _query = '';
 
   bool _showAllPopularCities = false;
-  bool _showAllFavorites = false;
 
   late final List<City> _displayedPopularCities;
 
+  // Cache utilisé pour conserver les quatre favoris tirés au hasard
+  // pendant les rebuilds de l'écran.
+  List<City> _randomFavorites = [];
+  String _favoritesSignature = '';
+
   final List<City> _popularCities = const [
+    // Côte d'Ivoire
     City(
       name: 'Abidjan',
       latitude: 5.36,
@@ -53,6 +58,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       longitude: -5.29,
       country: "Côte d'Ivoire",
     ),
+
+    // Afrique
     City(name: 'Accra', latitude: 5.56, longitude: -0.20, country: 'Ghana'),
     City(
       name: 'Addis-Abeba',
@@ -94,6 +101,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       longitude: 18.42,
       country: 'Afrique du Sud',
     ),
+
+    // Europe
     City(
       name: 'Amsterdam',
       latitude: 52.37,
@@ -169,6 +178,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       country: 'Autriche',
     ),
     City(name: 'Zurich', latitude: 47.38, longitude: 8.54, country: 'Suisse'),
+
+    // Asie
     City(
       name: 'Bangkok',
       latitude: 13.76,
@@ -223,6 +234,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ),
     City(name: 'Taipei', latitude: 25.03, longitude: 121.57, country: 'Taïwan'),
     City(name: 'Tokyo', latitude: 35.68, longitude: 139.69, country: 'Japon'),
+
+    // Moyen-Orient
     City(
       name: 'Abou Dabi',
       latitude: 24.45,
@@ -262,6 +275,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       longitude: 46.68,
       country: 'Arabie saoudite',
     ),
+
+    // Amérique du Nord
     City(
       name: 'Atlanta',
       latitude: 33.75,
@@ -334,6 +349,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       longitude: -77.04,
       country: 'États-Unis',
     ),
+
+    // Amérique du Sud
     City(
       name: 'Buenos Aires',
       latitude: -34.60,
@@ -365,6 +382,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       longitude: -46.63,
       country: 'Brésil',
     ),
+
+    // Océanie
     City(
       name: 'Auckland',
       latitude: -36.85,
@@ -465,6 +484,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  List<City> _getDisplayedFavorites(List<City> favorites) {
+    final signature = favorites
+        .map((city) => '${city.name}|${city.latitude}|${city.longitude}')
+        .join('||');
+
+    // Le tirage est recalculé uniquement lorsque la liste des favoris
+    // change. Ainsi, les cartes ne changent pas à chaque rebuild.
+    if (signature != _favoritesSignature) {
+      _favoritesSignature = signature;
+
+      _randomFavorites = [...favorites]..shuffle(Random());
+
+      if (_randomFavorites.length > 4) {
+        _randomFavorites = _randomFavorites.take(4).toList();
+      }
+    }
+
+    return _randomFavorites;
+  }
+
   @override
   Widget build(BuildContext context) {
     final favorites = ref.watch(favoritesProvider);
@@ -477,9 +516,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ? _displayedPopularCities
         : _displayedPopularCities.take(4).toList();
 
-    final visibleFavorites = _showAllFavorites
-        ? favorites
-        : favorites.take(4).toList();
+    final visibleFavorites = _getDisplayedFavorites(favorites);
 
     return Scaffold(
       body: SafeArea(
@@ -548,14 +585,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             title: 'Vos favoris',
                             subtitle: _favoriteSubtitle(favorites.length),
                             icon: Icons.favorite_rounded,
-                            buttonText: _showAllFavorites
-                                ? 'Voir moins'
-                                : 'Voir plus',
-                            onPressed: () {
-                              setState(() {
-                                _showAllFavorites = !_showAllFavorites;
-                              });
-                            },
+                            buttonText: 'Voir tout',
+                            onPressed: _openFavorites,
                           ),
                         ),
                       ),
@@ -1237,8 +1268,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Ajoutez vos villes préférées depuis leur page météo '
-                  'pour les retrouver rapidement ici.',
+                  'Ajoutez vos villes préférées depuis leur '
+                  'page météo pour les retrouver rapidement ici.',
                   style: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 12,
